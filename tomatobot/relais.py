@@ -1,5 +1,4 @@
 import time
-from random import randint
 from enum import IntEnum
 
 
@@ -71,19 +70,52 @@ class Relais:
 
 
 if __name__ == "__main__":
+    def play_sequence(switch_times: list):
+        next_relais_status = RelaisStatus.ON
+        for delay in switch_times:
+            if next_relais_status % 2 == RelaisStatus.ON:
+                print(f"Switch gpio at pin={args.io} ON for {delay} seconds.")
+                s.on()
+            else:
+                s.off()
+                print(f"On for {s.on_time} seconds. Switch it OFF for {delay} seconds.")
+            time.sleep(delay)
+            next_relais_status += 1
+        s.off()
+
+    import mock
+    import argparse
     # https://gpiozero.readthedocs.io/en/stable/
     # from gpiozero import OutputDevice
-    # r14_pin = OutputDevice(14)
-    import mock
 
-    r14_pin = mock.MagicMock()
-    s = Relais(r14_pin)
-    while s.on_count < 5:
-        s.on()
-        delay = randint(1, 5)
-        print(f"wait {delay} seconds...")
-        time.sleep(delay)
-        s.off()
-        print(s.on_time, s.on_count)
-    s.reset_on_time()
-    print(s.on_time)
+    parser = argparse.ArgumentParser(
+        description="Switch on/off a relais controlled by raspberry pi gpio"
+    )
+    parser.add_argument("--io", help="raspberry gpio to switch", type=int, default=17)
+    parser.add_argument("--on_seq", help="a sequence of on/off times in seconds, e.g. 2;5;2;10 would switch it on "
+                                         "for 2 seconds, off for 5 seconds, on for 2 seconds, off for 10 seconds",
+                        type=str, default="1")
+    parser.add_argument("--loop", help="if set to True the on_seq is played in a continuous loop", type=bool,
+                        default=False)
+    args = parser.parse_args()
+
+    switch_times = []
+    if args.on_seq:
+        switch_times = [int(x) for x in str(args.on_seq).strip(";").split(";")]
+        if len(switch_times) % 2 == 1:
+            parser.exit(status=-1, message="Wrong number of arguments")
+
+    # gpio_pin = OutputDevice(args.io)
+    gpio_pin = mock.MagicMock()
+    s = Relais(gpio_pin)
+
+    if args.loop:
+        loop_counter = 1
+        while True:
+            print(f"## play sequence #{loop_counter}")
+            play_sequence(switch_times)
+            loop_counter += 1
+    else:
+        play_sequence(switch_times)
+
+    print(f"## summary: gpio at pin={args.io} was ON for {s.on_time} seconds.")
