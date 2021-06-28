@@ -61,25 +61,24 @@ class TestRelais:
         assert relais.on_count == 1
         assert relais.on_time > 0
 
-    def test_reset_on_time_in_status_off_resets_counter(self, relais):
+    def test_reset_total_on_time_in_status_off_resets_counter(self, relais):
         relais.on_time = 10
-        relais.reset_on_time()
-        assert relais.on_time == 0
+        relais.reset_total_on_time()
+        assert relais.total_on_time == 0
 
-    def test_reset_on_time_in_status_on_does_nothing(self, relais):
-        relais.on_time = 10
+    def test_reset_total_on_time_in_status_on_does_nothing(self, relais):
+        relais._total_on_time = 10
         relais.on()
-        relais.reset_on_time()
-        assert relais.on_time == 10
+        relais.reset_total_on_time()
+        assert relais.total_on_time == 10
 
     def test_reset_on_count_in_status_off_resets_counter(self, relais):
         relais.on_count = 10
         relais.reset_on_count()
         assert relais.on_count == 0
 
-    def test_reset_on_count_in_status_off_resets_counter(self, relais):
+    def test_reset_on_count_in_status_on_does_not_reset(self, relais):
         relais.on()
         relais.on_count = 10
         relais.reset_on_count()
         assert relais.on_count == 10
-
